@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/PPACI/microsoft-defender-ATP-exporter/pkg/api/vulnerabilities"
 	"github.com/PPACI/microsoft-defender-ATP-exporter/pkg/azureauth"
 	"log"
 	"os"
@@ -31,10 +32,10 @@ func init() {
 func main() {
 	log.Println("Init Azure Auth client")
 	client := azureauth.NewAuthClient(AzureTenantId, AzureClientId, AzureClientSecret)
-	log.Println("Get Token")
-	token, err := client.GetToken()
+	log.Println("Get List of machine vulnerabilities")
+	machineVulnerabilities, err := vulnerabilities.GetMachineVulnerabilities(client)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Received token : %v\n", token)
+	log.Printf("%+v\n", machineVulnerabilities)
 }

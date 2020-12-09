@@ -57,7 +57,7 @@ func (a *AuthClient) GetToken() (string, error) {
 		if err := json.Unmarshal(body, &newToken); err != nil {
 			return "", err
 		}
-		log.Printf("Received token: %+v\n", newToken)
+		log.Printf("Received token: %s...\n", newToken.AccessToken[0:20])
 		tokenCache = newToken
 	}
 	return tokenCache.AccessToken, nil
