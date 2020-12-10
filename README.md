@@ -52,6 +52,9 @@ defender_atp_vulnerabilities{machineId="eb441179015d4cb63e09afa0be78280354d5915c
 defender_atp_vulnerabilities{machineId="ec60c92fff7f690e107261fe67a07c0ec2af7c37",severity="Low"} 1
 defender_atp_vulnerabilities{machineId="ed8e575c21bd4751e1cbc75980a6f78086ef2f33",severity="Low"} 99
 defender_atp_vulnerabilities{machineId="ed8e575c21bd4751e1cbc75980a6f78086ef2f33",severity="Medium"} 85
+# HELP defender_atp_exposure_score Exposure score
+# TYPE defender_atp_exposure_score gauge
+defender_atp_exposure_score 17.322580645161292
 # HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
 # TYPE go_gc_duration_seconds summary
 go_gc_duration_seconds{quantile="0"} 4.1343e-05
