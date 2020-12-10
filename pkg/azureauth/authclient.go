@@ -14,9 +14,9 @@ import (
 var tokenCache Token
 
 type AuthClient struct {
-	TenantId     string
-	ClientId     string
-	ClientSecret string
+	tenantId     string
+	clientId     string
+	clientSecret string
 }
 
 type Token struct {
@@ -27,7 +27,7 @@ type Token struct {
 
 // NewAuthClient Initialize a new AuthClient using azure credentials
 func NewAuthClient(tenantId string, clientId string, clientSecret string) *AuthClient {
-	return &AuthClient{TenantId: tenantId, ClientId: clientId, ClientSecret: clientSecret}
+	return &AuthClient{tenantId: tenantId, clientId: clientId, clientSecret: clientSecret}
 }
 
 // getToken give you a access token with still at least 5 minutes of validity.
@@ -36,12 +36,12 @@ func (a *AuthClient) GetToken() (string, error) {
 	expirationTime := tokenCache.issueTime.Add(time.Duration(tokenCache.ExpiresIn) * time.Second)
 	if tokenCache == (Token{}) || expirationTime.Sub(time.Now()) < 5 {
 		log.Println("Refreshing Azure token")
-		authUrl := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", a.TenantId)
+		authUrl := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", a.tenantId)
 		resp, err := http.PostForm(authUrl, url.Values{
 			"grant_type":    {"client_credentials"},
-			"client_id":     {a.ClientId},
+			"client_id":     {a.clientId},
 			"scope":         {"https://securitycenter.onmicrosoft.com/windowsatpservice/.default"},
-			"client_secret": {a.ClientSecret},
+			"client_secret": {a.clientSecret},
 		})
 		if err != nil {
 			return "", err
