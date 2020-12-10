@@ -20,21 +20,31 @@ var (
 		Name:      "exposure",
 		Help:      "Exposure of machines",
 	}, []string{"product_name", "severity"})
+	exposureScoreGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "defender_atp",
+		Name:      "exposure_score",
+		Help:      "Exposure score",
+	})
 )
 
 func init() {
 	prometheus.MustRegister(vulnerabilityGauge)
 	prometheus.MustRegister(exposureGauge)
+	prometheus.MustRegister(exposureScoreGauge)
 }
 
 func refreshData(authClient *azureauth.AuthClient) {
+	refreshVulnerabilities(authClient)
+	refreshExposureScore(authClient)
+	log.Println("Refreshed data from API")
+}
+
+func refreshVulnerabilities(authClient *azureauth.AuthClient) {
 	machineVulnerabilitiesData, err := vulnerabilities.GetMachineVulnerabilities(authClient)
 	if err != nil {
 		log.Println("Error while fetching machine vulnerabilities")
 		log.Println(err)
 	}
-	log.Println("Refreshed data from API")
-
 	machineVulnerabilities := make(map[string]map[string]int)
 	for _, vuln := range machineVulnerabilitiesData {
 		if machineVulnerabilities[vuln.MachineId] == nil {
@@ -68,6 +78,15 @@ func refreshData(authClient *azureauth.AuthClient) {
 			gauge.Set(float64(count))
 		}
 	}
+}
+
+func refreshExposureScore(authClient *azureauth.AuthClient) {
+	exposureScoreData, err := vulnerabilities.GetExposureScore(authClient)
+	if err != nil {
+		log.Println("Error while fetching machine vulnerabilities")
+		log.Println(err)
+	}
+	exposureScoreGauge.Set(exposureScoreData)
 }
 
 func StartExporter(authClient *azureauth.AuthClient, ctx context.Context) {
