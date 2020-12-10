@@ -1,9 +1,12 @@
 package main
 
 import (
-	"github.com/PPACI/microsoft-defender-ATP-exporter/pkg/api/vulnerabilities"
+	"context"
 	"github.com/PPACI/microsoft-defender-ATP-exporter/pkg/azureauth"
+	"github.com/PPACI/microsoft-defender-ATP-exporter/pkg/exporter"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -30,12 +33,17 @@ func init() {
 }
 
 func main() {
+	// Init Auth client
 	log.Println("Init Azure Auth client")
 	client := azureauth.NewAuthClient(AzureTenantId, AzureClientId, AzureClientSecret)
-	log.Println("Get List of machine vulnerabilities")
-	machineVulnerabilities, err := vulnerabilities.GetMachineVulnerabilities(client)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("%+v\n", machineVulnerabilities)
+
+	// Start exporter polling job
+	ctx := context.Background()
+	exporter.StartExporter(client, ctx)
+
+	// Expose prometheus handler
+	log.Println("Listen on :8080")
+	http.Handle("/metrics", promhttp.Handler())
+	log.Fatal(http.ListenAndServe(":8080", nil))
+
 }
