@@ -15,10 +15,10 @@ var (
 		Name:      "vulnerabilities",
 		Help:      "Number of vulnerability found on machines",
 	}, []string{"machineId", "severity"})
-	exposureGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	machineExposureGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: "defender_atp",
-		Name:      "exposure",
-		Help:      "Exposure of machines",
+		Name:      "machine_exposure",
+		Help:      "Number of machine exposed",
 	}, []string{"product_name", "severity"})
 	exposureScoreGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "defender_atp",
@@ -29,7 +29,7 @@ var (
 
 func init() {
 	prometheus.MustRegister(vulnerabilityGauge)
-	prometheus.MustRegister(exposureGauge)
+	prometheus.MustRegister(machineExposureGauge)
 	prometheus.MustRegister(exposureScoreGauge)
 }
 
@@ -62,20 +62,26 @@ func refreshVulnerabilities(authClient *azureauth.AuthClient) {
 		}
 	}
 
-	exposure := make(map[string]map[string]int)
+	// Software > severity > machineId
+	// the machineID map is then used to count the number of machine
+	// Go doesn't have a set objet
+	exposure := make(map[string]map[string]map[string]bool)
 	for _, vuln := range machineVulnerabilitiesData {
 		if exposure[vuln.ProductName] == nil {
-			exposure[vuln.ProductName] = make(map[string]int)
+			exposure[vuln.ProductName] = map[string]map[string]bool{vuln.Severity: {}}
 		}
-		exposure[vuln.ProductName][vuln.Severity]++
+		if exposure[vuln.ProductName][vuln.Severity] == nil {
+			exposure[vuln.ProductName][vuln.Severity] = map[string]bool{}
+		}
+		exposure[vuln.ProductName][vuln.Severity][vuln.MachineId] = true
 	}
 	for productName, v := range exposure {
-		for severity, count := range v {
-			gauge, err := exposureGauge.GetMetricWithLabelValues(productName, severity)
+		for severity, machineIds := range v {
+			gauge, err := machineExposureGauge.GetMetricWithLabelValues(productName, severity)
 			if err != nil {
 				log.Fatal(err)
 			}
-			gauge.Set(float64(count))
+			gauge.Set(float64(len(machineIds)))
 		}
 	}
 }
